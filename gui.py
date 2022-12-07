@@ -14,7 +14,7 @@ def set_entry_value(entry: tk.Entry, value: str):
 
 
 def select_csv_file(title: str) -> str:
-    filename = filedialog.askopenfilename(title=title, filetypes=[("CSV files", "csv")])
+    filename = filedialog.askopenfilename(title=title, filetypes=[("CSV files", "csv")], initialdir=os.getcwd())
     if filename == "":
         print("No filename selected")
         return ""

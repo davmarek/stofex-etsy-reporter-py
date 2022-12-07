@@ -8,18 +8,18 @@ LowStockData = dict[str, int]
 
 
 def load_csv_data(filepath: str, sku_column: int, value_column: int, value_type: type):
-    df: pd.DataFrame
-    data = {}
-
     # Load the file if it exists
+    df: pd.DataFrame
     if os.path.exists(filepath):
         # Load the file into a DataFrame
-        df = pd.read_csv(filepath)
+        delimiter = detect_delimiter(filepath)
+        df = pd.read_csv(filepath, sep=delimiter, encoding="UTF8")
     else:
         print("The file does not exist:", filepath)
         exit(1)
 
     # Put the DataFrame into dict
+    data = {}
     for _, row in df.iterrows():
         key: str = str(row[sku_column])
 
@@ -59,3 +59,19 @@ def load_money_data(filepath: str) -> MoneyData:
 def load_ls_data(filepath: str) -> LowStockData:
     # value type is int = quantity
     return load_csv_data(filepath, c.COLUMN_LS_SKU, c.COLUMN_LS_QUANTITY, value_type=int)
+
+
+def detect_delimiter(filepath):
+    # Open the file in read-only mode
+    with open(filepath, 'r', encoding="UTF8") as csvfile:
+        # read the first row = header
+        header = csvfile.readline()
+
+        # count the number of commas and semicolons in the header row
+        num_commas = header.count(',')
+        num_semicolons = header.count(';')
+
+        if num_semicolons > num_commas:
+            return ';'
+        else:
+            return ','
