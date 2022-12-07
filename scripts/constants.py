@@ -13,8 +13,15 @@ FILENAME_LOW_STOCK_SUB0: str = "low_stock_sub0.csv"
 FILENAME_LOW_STOCK_SUB10: str = "low_stock_sub10.csv"
 FILENAME_LOW_STOCK_SUB50: str = "low_stock_sub50.csv"
 FILENAME_LOW_STOCK_NEW: str = "low_stock_new.csv"
-FILENAME_RESTOCK: str = "restocked.csv"
+FILENAME_RESTOCK: str = "restock.csv"
 
 # Headers of CSV files
 HEADER_WRONG_SKU = ("SKU", "Title")
 HEADER_LOW_STOCK = ("SKU", "Quantity", "Etsy Title")
+HEADER_RESTOCK = ("SKU", "Old Quantity", "New Quantity")
+HEADER_LOW_STOCK_NEW = ("SKU", "Quantity")
+
+
+# GUI Settings
+GUI_WINDOW_PAD = 20
+GUI_SECTION_PADY = 5

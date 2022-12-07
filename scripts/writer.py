@@ -1,6 +1,5 @@
 import csv
 import os.path
-import time
 from pathlib import Path
 from datetime import datetime
 
@@ -26,6 +25,7 @@ def write_data_to_csv(filepath: str, data: list[tuple] | list[list], header: lis
 
 def write_data_to_cwd(filename: str, data: list[tuple] | list[list], header: list | tuple = None):
     cwd = os.getcwd()
+    print("CWD", cwd)
     filepath = os.path.join(cwd, filename)
     write_data_to_csv(filepath, data, header)
 

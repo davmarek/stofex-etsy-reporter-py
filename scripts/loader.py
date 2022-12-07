@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-import constants as c
+from scripts import constants as c
 
 EtsyData = dict[str, str]
 MoneyData = dict[str, int]

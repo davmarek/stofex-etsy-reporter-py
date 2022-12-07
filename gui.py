@@ -2,7 +2,11 @@ import os
 import tkinter as tk
 from tkinter import filedialog
 
-from reporter import load_and_report
+from scripts.reporter import load_and_report
+from scripts import constants as c
+
+FAVICON_ICO = "icons/favicon.ico"
+FAVICON_PNG = "icons/favicon.png"
 
 
 def set_entry_value(entry: tk.Entry, value: str):
@@ -51,9 +55,11 @@ class Window:
     def __init__(self):
         # Create the main window
         self.root = tk.Tk()
+
+        # Main windows settings
         self.root.title("Etsy Reporter")
-        app_icon = tk.PhotoImage(file="icons/favicon.png")
-        self.root.iconbitmap("icons/favicon.ico")
+        app_icon = tk.PhotoImage(file=FAVICON_PNG)
+        self.root.iconbitmap(FAVICON_ICO)
         self.root.iconphoto(False, app_icon)
 
         # Variables
@@ -66,14 +72,18 @@ class Window:
         self.money_path.set(try_to_find_file("export.csv"))
         self.save_dir_path.set(os.getcwd())
 
+        # Errors Strings
+        self.etsy_error = tk.StringVar()
+        self.money_error = tk.StringVar()
+
         # Main wrapping frame
         frame = tk.Frame(self.root)
-        frame.pack(padx=20, pady=20)
+        frame.pack(padx=c.GUI_WINDOW_PAD, pady=c.GUI_WINDOW_PAD)
 
         # ==== ETSY ====
         # Create Etsy Frame
         frame_etsy = tk.Frame(frame)
-        frame_etsy.grid(column=0, row=0, pady=5, sticky=tk.W)
+        frame_etsy.grid(column=0, row=0, sticky=tk.W)
 
         # Etsy label
         tk.Label(frame_etsy, text="Etsy CSV").grid(column=0, row=0, sticky=tk.W)
@@ -86,10 +96,14 @@ class Window:
         etsy_button_browse = tk.Button(frame_etsy, text="Select file", command=self.select_etsy)
         etsy_button_browse.grid(column=1, row=1)
 
+        # Etsy error
+        etsy_error_label = tk.Label(frame_etsy, textvariable=self.etsy_error, fg="red")
+        etsy_error_label.grid(column=0, row=2, columnspan=2, sticky=tk.W)
+
         # ==== MONEY ====
         # Create Money Frame
         frame_money = tk.Frame(frame)
-        frame_money.grid(column=0, row=1, pady=5, sticky=tk.W)
+        frame_money.grid(column=0, row=1, sticky=tk.W)
 
         # Money label
         tk.Label(frame_money, text="Money CSV").grid(column=0, row=0, sticky=tk.W)
@@ -102,10 +116,14 @@ class Window:
         money_button_browse = tk.Button(frame_money, text="Select file", command=self.select_money)
         money_button_browse.grid(column=1, row=1)
 
+        # Money error
+        money_error_label = tk.Label(frame_money, textvariable=self.money_error, fg="red")
+        money_error_label.grid(column=0, row=2, columnspan=2, sticky=tk.W)
+
         # ==== LOW STOCK ====
         # Create Low stock Frame
         frame_ls = tk.Frame(frame)
-        frame_ls.grid(column=0, row=2, pady=5, sticky=tk.W)
+        frame_ls.grid(column=0, row=2, pady=c.GUI_SECTION_PADY, sticky=tk.W)
 
         # Low stock label
         tk.Label(frame_ls, text="Low stock CSV").grid(column=0, row=0, sticky=tk.W)
@@ -121,7 +139,7 @@ class Window:
         # ==== SAVE FOLDER ====
         # Create Save dir Frame
         frame_save_dir = tk.Frame(frame)
-        frame_save_dir.grid(column=0, row=3, pady=5, sticky=tk.W)
+        frame_save_dir.grid(column=0, row=3, pady=c.GUI_SECTION_PADY, sticky=tk.W)
 
         # Save dir label
         tk.Label(frame_save_dir, text="Save Folder").grid(column=0, row=0, sticky=tk.W)
@@ -137,15 +155,19 @@ class Window:
         # ==== GENERATE REPORT ====
         # Report button
         report_button = tk.Button(frame, text="Generate Report", command=self.generate_report)
-        report_button.grid(column=0, row=4, pady=5, ipady=5, sticky="news")
+        report_button.grid(column=0, row=4, pady=(c.GUI_SECTION_PADY, 0), ipady=5, sticky="news")
 
     def select_etsy(self):
         filepath = select_csv_file("Select Etsy CSV")
-        self.etsy_path.set(filepath)
+        if filepath != "":
+            self.etsy_path.set(filepath)
+            self.etsy_error.set("")
 
     def select_money(self):
         filepath = select_csv_file("Select Money CSV")
-        self.money_path.set(filepath)
+        if filepath != "":
+            self.money_path.set(filepath)
+            self.money_error.set("")
 
     def select_low_stock(self):
         filepath = select_csv_file("Select Low stock CSV")
@@ -160,11 +182,17 @@ class Window:
         money_filepath = self.money_path.get()
         ls_filepath = self.ls_path.get()
 
+        self.etsy_error.set("")
         if etsy_filepath == "":
             print("Etsy filepath empty")
+            self.etsy_error.set("Etsy filepath empty")
+            return
 
+        self.money_error.set("")
         if money_filepath == "":
             print("Money filepath empty")
+            self.money_error.set("Money filepath empty")
+            return
 
         load_and_report(etsy_filepath, money_filepath, ls_filepath)
 
