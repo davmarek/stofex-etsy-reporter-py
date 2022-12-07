@@ -1,24 +1,10 @@
 import os
 import pandas as pd
+import constants as c
 
-EtsyData = dict[str, int]
+EtsyData = dict[str, str]
 MoneyData = dict[str, int]
 LowStockData = dict[str, int]
-
-EtsySKUColumn: int = 23
-EtsyTitleColumn: int = 0
-MoneySKUColumn: int = 3
-MoneyQuantityColumn: int = 4
-LsSKUColumn: int = 0
-LsQuantityColumn: int = 1
-
-FilenameLowStock: str = "low_stock.csv"
-FilenameLowStockSub0: str = "low_stock_sub0.csv"
-FilenameLowStockSub10: str = "low_stock_sub10.csv"
-FilenameLowStockSub50: str = "low_stock_sub50.csv"
-FilenameWrongSKU: str = "wrong_sku.csv"
-FilenameRestock: str = "restocked.csv"
-FilenameLowStockNew: str = "low_stock_new.csv"
 
 
 def load_csv_data(filepath: str, sku_column: int, value_column: int, value_type: type):
@@ -61,12 +47,15 @@ def load_csv_data(filepath: str, sku_column: int, value_column: int, value_type:
 
 
 def load_etsy_data(filepath: str) -> EtsyData:
-    return load_csv_data(filepath, EtsySKUColumn, EtsyTitleColumn, value_type=str)
+    # value type is str = product title
+    return load_csv_data(filepath, c.COLUMN_ETSY_SKU, c.COLUMN_ETSY_TITLE, value_type=str)
 
 
 def load_money_data(filepath: str) -> MoneyData:
-    return load_csv_data(filepath, MoneySKUColumn, MoneyQuantityColumn, value_type=int)
+    # value type is int = quantity
+    return load_csv_data(filepath, c.COLUMN_MONEY_SKU, c.COLUMN_MONEY_QUANTITY, value_type=int)
 
 
 def load_ls_data(filepath: str) -> LowStockData:
-    return load_csv_data(filepath, LsSKUColumn, LsQuantityColumn, value_type=int)
+    # value type is int = quantity
+    return load_csv_data(filepath, c.COLUMN_LS_SKU, c.COLUMN_LS_QUANTITY, value_type=int)

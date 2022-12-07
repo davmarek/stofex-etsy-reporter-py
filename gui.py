@@ -2,22 +2,7 @@ import os
 import tkinter as tk
 from tkinter import filedialog
 
-from loaders import load_etsy_data, load_money_data, load_ls_data
-from reporters import report_wrong_sku
-
-
-def load_and_report(etsy_filepath: str, money_filepath: str, ls_filepath: str = ""):
-    etsy = load_etsy_data(etsy_filepath)
-    money = load_money_data(money_filepath)
-
-    print("Etsy SKUs:", len(etsy))
-    print("Money SKUs:", len(money))
-
-    if ls_filepath != "":
-        ls = load_ls_data(ls_filepath)
-        print("Low Stock SKUs:", len(ls))
-
-    report_wrong_sku(etsy, money)
+from reporter import load_and_report
 
 
 def set_entry_value(entry: tk.Entry, value: str):
@@ -67,16 +52,19 @@ class Window:
         # Create the main window
         self.root = tk.Tk()
         self.root.title("Etsy Reporter")
+        app_icon = tk.PhotoImage(file="icons/favicon.png")
+        self.root.iconbitmap("icons/favicon.ico")
+        self.root.iconphoto(False, app_icon)
 
         # Variables
         self.etsy_path = tk.StringVar()
         self.money_path = tk.StringVar()
         self.ls_path = tk.StringVar()
-        self.report_path = tk.StringVar()
+        self.save_dir_path = tk.StringVar()
 
         self.etsy_path.set(try_to_find_file("etsy.csv"))
         self.money_path.set(try_to_find_file("export.csv"))
-        self.report_path.set(os.getcwd())
+        self.save_dir_path.set(os.getcwd())
 
         # Main wrapping frame
         frame = tk.Frame(self.root)
@@ -130,21 +118,21 @@ class Window:
         ls_button_browse = tk.Button(frame_ls, text="Select file", command=self.select_low_stock)
         ls_button_browse.grid(column=1, row=1)
 
-        # ==== REPORT FOLDER ====
-        # Create Low stock Frame
-        frame_report = tk.Frame(frame)
-        frame_report.grid(column=0, row=3, pady=5, sticky=tk.W)
+        # ==== SAVE FOLDER ====
+        # Create Save dir Frame
+        frame_save_dir = tk.Frame(frame)
+        frame_save_dir.grid(column=0, row=3, pady=5, sticky=tk.W)
 
-        # Low stock label
-        tk.Label(frame_report, text="Report Folder").grid(column=0, row=0, sticky=tk.W)
+        # Save dir label
+        tk.Label(frame_save_dir, text="Save Folder").grid(column=0, row=0, sticky=tk.W)
 
-        # Low stock filepath input
-        self.report_input = tk.Entry(frame_report, textvariable=self.report_path, state=tk.DISABLED, width=60)
-        self.report_input.grid(column=0, row=1)
+        # Save dir filepath input
+        self.save_dir_input = tk.Entry(frame_save_dir, textvariable=self.save_dir_path, state="readonly", width=60)
+        self.save_dir_input.grid(column=0, row=1, columnspan=2)
 
         # Low stock browse button
-        report_button_browse = tk.Button(frame_report, text="Select folder", command=self.select_report_folder)
-        report_button_browse.grid(column=1, row=1)
+        # save_dir_button_browse = tk.Button(frame_save_dir, text="Select folder", command=self.select_save_dir_folder)
+        # save_dir_button_browse.grid(column=1, row=1)
 
         # ==== GENERATE REPORT ====
         # Report button
@@ -163,9 +151,9 @@ class Window:
         filepath = select_csv_file("Select Low stock CSV")
         self.ls_path.set(filepath)
 
-    def select_report_folder(self):
+    def select_save_dir_folder(self):
         path = select_folder("Select folder for reports")
-        self.report_path.set(path)
+        self.save_dir_path.set(path)
 
     def generate_report(self):
         etsy_filepath = self.etsy_path.get()
@@ -181,5 +169,6 @@ class Window:
         load_and_report(etsy_filepath, money_filepath, ls_filepath)
 
     def start(self):
+        self.root.geometry("+%d+%d" % (100, 100))
         # Start the GUI event loop
         self.root.mainloop()

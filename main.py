@@ -1,7 +1,4 @@
-
 from gui import Window
-
-
 
 
 def main():
