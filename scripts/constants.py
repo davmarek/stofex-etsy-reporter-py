@@ -1,3 +1,7 @@
+# Default filenames
+DEFAULT_FILENAME_ETSY = "etsy.csv"
+DEFAULT_FILENAME_MONEY = "export.csv"
+
 # CSV column indexes
 COLUMN_ETSY_SKU: int = 23
 COLUMN_ETSY_TITLE: int = 0

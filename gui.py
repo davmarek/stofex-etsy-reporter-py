@@ -59,9 +59,6 @@ class Window:
 
         # Main windows settings
         self.root.title("Etsy Reporter")
-        # self.root.iconbitmap(FAVICON_ICO)
-        # app_icon = tk.PhotoImage(file=FAVICON_PNG)
-        # self.root.iconphoto(False, app_icon)
 
         # Variables
         self.etsy_path = tk.StringVar()
@@ -69,8 +66,8 @@ class Window:
         self.ls_path = tk.StringVar()
         self.save_dir_path = tk.StringVar()
 
-        self.etsy_path.set(try_to_find_file("etsy.csv"))
-        self.money_path.set(try_to_find_file("export.csv"))
+        self.etsy_path.set(try_to_find_file(c.DEFAULT_FILENAME_ETSY))
+        self.money_path.set(try_to_find_file(c.DEFAULT_FILENAME_MONEY))
         self.save_dir_path.set(os.getcwd())
 
         # Errors Strings
