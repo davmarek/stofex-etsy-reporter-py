@@ -1,13 +1,17 @@
 import os
+from csv import Sniffer
+
 import pandas as pd
+
 from scripts import constants as c
-
-EtsyData = dict[str, str]
-MoneyData = dict[str, int]
-LowStockData = dict[str, int]
+from scripts.model import ProductList, Product
 
 
-def load_csv_data(filepath: str, sku_column: int, value_column: int, value_type: type):
+def load_csv_data(filepath: str,
+                  sku_column: int,
+                  quantity_column: int | None = None,
+                  title_column: int | None = None
+                  ) -> ProductList:
     # Load the file if it exists
     df: pd.DataFrame
     if os.path.exists(filepath):
@@ -16,62 +20,50 @@ def load_csv_data(filepath: str, sku_column: int, value_column: int, value_type:
         df = pd.read_csv(filepath, sep=delimiter, encoding="UTF8")
     else:
         print("The file does not exist:", filepath)
-        exit(1)
+        raise FileNotFoundError
 
-    # Put the DataFrame into dict
+    # Put the DataFrame into dict of Products
     data = {}
     for _, row in df.iterrows():
-        key: str = str(row[sku_column])
+        sku: str = str(row[sku_column])
 
-        # has commas inside SKU column = Etsy listing with variants
-        if "," in key:
-            # k = one SKU in one Etsy listing
-            for k in key.split(","):
-                val = str(row[value_column])
-                # add SKU with title to returned data
-                data[k] = val
+        # Money or Low Stock
+        if quantity_column is not None:
+            quantity_string = str(row[quantity_column]).replace(",", ".")
+            quantity = int(float(quantity_string))
+            data[sku] = Product(sku, quantity=quantity)
 
-        else:
-            # MoneyData or LowStockData
-            if value_type == int:
-                val_string = str(row[value_column]).replace(",", ".")
-                val_number = float(val_string)
-                val = int(val_number)
-            # EtsyData
+        # Etsy
+        elif title_column is not None:
+            # has commas inside SKU column = Etsy listing with variants
+            if "," in sku:
+                # sku_variant = one SKU in one Etsy listing
+                for sku_variant in sku.split(","):
+                    data[sku_variant] = Product(sku_variant, title=row[title_column])
+
             else:
-                val = str(row[value_column])
-
-            data[key] = val
+                data[sku] = Product(sku, title=row[title_column])
 
     return data
 
 
-def load_etsy_data(filepath: str) -> EtsyData:
+def load_etsy_data(filepath: str) -> ProductList:
     # value type is str = product title
-    return load_csv_data(filepath, c.COLUMN_ETSY_SKU, c.COLUMN_ETSY_TITLE, value_type=str)
+    return load_csv_data(filepath, sku_column=c.COLUMN_ETSY_SKU, title_column=c.COLUMN_ETSY_TITLE)
 
 
-def load_money_data(filepath: str) -> MoneyData:
+def load_money_data(filepath: str) -> ProductList:
     # value type is int = quantity
-    return load_csv_data(filepath, c.COLUMN_MONEY_SKU, c.COLUMN_MONEY_QUANTITY, value_type=int)
+    return load_csv_data(filepath, sku_column=c.COLUMN_MONEY_SKU, quantity_column=c.COLUMN_MONEY_QUANTITY)
 
 
-def load_ls_data(filepath: str) -> LowStockData:
+def load_ls_data(filepath: str) -> ProductList:
     # value type is int = quantity
-    return load_csv_data(filepath, c.COLUMN_LS_SKU, c.COLUMN_LS_QUANTITY, value_type=int)
+    return load_csv_data(filepath, sku_column=c.COLUMN_LS_SKU, quantity_column=c.COLUMN_LS_QUANTITY)
 
 
 def detect_delimiter(filepath):
-    # Open the file in read-only mode
     with open(filepath, 'r', encoding="UTF8") as csvfile:
-        # read the first row = header
-        header = csvfile.readline()
-
-        # count the number of commas and semicolons in the header row
-        num_commas = header.count(',')
-        num_semicolons = header.count(';')
-
-        if num_semicolons > num_commas:
-            return ';'
-        else:
-            return ','
+        # Use the csv module's Sniffer class to automatically detect the delimiter
+        dialect = Sniffer().sniff(csvfile.read(1024))
+        return dialect.delimiter

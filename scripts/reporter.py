@@ -1,15 +1,16 @@
 from tkinter import messagebox
-from time import time
+from time import perf_counter
 import threading
 
 from scripts.writer import write_data_to_cwd, write_data_to_report_folder
-from scripts.loader import load_etsy_data, load_money_data, load_ls_data, EtsyData, MoneyData, LowStockData
+from scripts.loader import load_etsy_data, load_money_data, load_ls_data
+from scripts.model import Product, ProductList
 from scripts import constants as c
 
 
 class LowStockReport:
-    def __init__(self, low_stock_data: LowStockData, len_all: int, len_sub0: int, len_sub10: int, len_sub50: int):
-        self.low_stock_data: LowStockData = low_stock_data
+    def __init__(self, low_stock_data: ProductList, len_all: int, len_sub0: int, len_sub10: int, len_sub50: int):
+        self.low_stock_data: ProductList = low_stock_data
         self.all: int = len_all
         self.sub0: int = len_sub0
         self.sub10: int = len_sub10
@@ -17,7 +18,7 @@ class LowStockReport:
 
 
 def load_and_report(etsy_filepath: str, money_filepath: str, ols_filepath: str = ""):
-    time_start = time()
+    time_start = perf_counter()
 
     # ==== FILE LOADING ====
     # load both mandatory files
@@ -50,7 +51,7 @@ def load_and_report(etsy_filepath: str, money_filepath: str, ols_filepath: str =
 
     # ==== REPORT TIME ====
 
-    time_end = time()
+    time_end = perf_counter()
 
     time_result = time_end - time_start
     print("Time:", time_result)
@@ -70,13 +71,13 @@ def load_and_report(etsy_filepath: str, money_filepath: str, ols_filepath: str =
     messagebox.showinfo("Result", message, icon="info")
 
 
-def report_wrong_sku(etsy: EtsyData, money: MoneyData) -> int:
-    money_keys = money.keys()
-    wrong: list[tuple] = []  # list of tuples [(SKU, title),...]
-
-    for sku, title in etsy.items():
-        if sku not in money_keys:
-            wrong.append((sku, title))
+def report_wrong_sku(etsy: ProductList, money: ProductList) -> int:
+    # list of tuples [(SKU, title),...]
+    wrong = [
+        product.get_tuple(include_title=True)
+        for sku, product in etsy.items()
+        if sku not in money.keys()
+    ]
 
     if len(wrong) > 0:
         print("Wrong SKUs found")
@@ -87,42 +88,34 @@ def report_wrong_sku(etsy: EtsyData, money: MoneyData) -> int:
     return len(wrong)
 
 
-def report_low_stock(etsy: EtsyData, money: MoneyData) -> LowStockReport:
-    # dict with all data
-    low_stock: LowStockData = {}
+def report_low_stock(etsy: ProductList, money: ProductList) -> LowStockReport:
+    low_stock: ProductList = {
+        money_sku: money_product
+        for money_sku, money_product in money.items()
+        if money_sku in etsy.keys() and money_product.quantity < 50
+    }
 
-    # lists with data for csv files
-    stock_sub0 = []
-    stock_sub10 = []
-    stock_sub50 = []
-    stock_all = []
+    stock_sub0 = [
+        (sku, product.quantity, etsy[sku].title)
+        for sku, product in low_stock.items()
+        if product.quantity <= 0
+    ]
 
-    for etsy_sku in etsy.keys():
-        money_quantity: int
+    stock_sub10 = [
+        (sku, product.quantity, etsy[sku].title)
+        for sku, product in low_stock.items()
+        if 0 < product.quantity <= 10
+    ]
 
-        # check if Etsy SKU is in Money
-        try:
-            money_quantity = money[etsy_sku]
-        except KeyError:
-            # Etsy SKU isn't in Money
-            continue
+    stock_sub50 = [
+        (sku, product.quantity, etsy[sku].title)
+        for sku, product in low_stock.items()
+        if 10 < product.quantity <= 50
+    ]
 
-        if money_quantity < 50:
-            low_stock[etsy_sku] = money_quantity
+    stock_all = stock_sub0 + stock_sub10 + stock_sub50
 
-            # this will become one row in the CSV file
-            row = (etsy_sku, money_quantity, etsy[etsy_sku])
-
-            stock_all.append(row)
-
-            if money_quantity <= 0:
-                stock_sub0.append(row)
-            elif money_quantity <= 10:
-                stock_sub10.append(row)
-            else:
-                stock_sub50.append(row)
-
-    report :LowStockReport= LowStockReport(
+    report = LowStockReport(
         low_stock_data=low_stock,
         len_all=len(stock_all),
         len_sub0=len(stock_sub0),
@@ -131,7 +124,6 @@ def report_low_stock(etsy: EtsyData, money: MoneyData) -> LowStockReport:
     )
 
     if report.all > 0:
-        print("writing low stock")
         # write low stock report to cwd AND reports folder
         write_data_to_cwd(c.FILENAME_LOW_STOCK, stock_all, c.HEADER_LOW_STOCK)
         write_data_to_report_folder(c.FILENAME_LOW_STOCK, stock_all, c.HEADER_LOW_STOCK)
@@ -147,17 +139,15 @@ def report_low_stock(etsy: EtsyData, money: MoneyData) -> LowStockReport:
     return report
 
 
-def report_restock(ols_data: LowStockData, money_data: MoneyData) -> int:
-    restock = []
-    for ols_sku in ols_data.keys():
-        try:
-            new_quantity = money_data[ols_sku]
-        except KeyError:
-            continue
-
-        old_quantity = ols_data[ols_sku]
-        if (new_quantity > old_quantity) and (new_quantity >= 50):
-            restock.append((ols_sku, old_quantity, new_quantity))
+def report_restock(ols: ProductList, money: ProductList) -> int:
+    restock = [
+        (money_sku, ols[money_sku].quantity, money_product.quantity)
+        for money_sku, money_product in money.items()
+        if
+        money_sku in ols.keys()
+        and money_product.quantity > 50
+        and money_product.quantity > ols[money_sku].quantity
+    ]
 
     restock_count = len(restock)
     if restock_count > 0:
@@ -166,19 +156,16 @@ def report_restock(ols_data: LowStockData, money_data: MoneyData) -> int:
     return restock_count
 
 
-def report_new_low_stock(ols_data: LowStockData, ls_data: LowStockData) -> int:
-    low_stock_new = []
-    for ls_sku in ls_data.keys():
-        try:
-            _ = ols_data[ls_sku]
-            # continue if NEW low_stock is in OLD low_stock
-            continue
-        except KeyError:
-            # ignore error
-            low_stock_new.append((ls_sku, ls_data[ls_sku]))
+def report_new_low_stock(ols: ProductList, ls: ProductList) -> int:
+    nls = [
+        ls_product.get_tuple()
+        for ls_sku, ls_product in ls.items()
+        if
+        ls_sku not in ols.keys()
+    ]
 
-    new_low_stock_count = len(low_stock_new)
-    if new_low_stock_count > 0:
-        write_data_to_report_folder(c.FILENAME_LOW_STOCK_NEW, low_stock_new, c.HEADER_LOW_STOCK_NEW)
+    nls_count = len(nls)
+    if nls_count > 0:
+        write_data_to_report_folder(c.FILENAME_LOW_STOCK_NEW, nls, c.HEADER_LOW_STOCK_NEW)
 
-    return new_low_stock_count
+    return nls_count
