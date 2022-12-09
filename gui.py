@@ -6,10 +6,6 @@ from scripts.reporter import load_and_report
 from scripts import constants as c
 
 
-# FAVICON_ICO = "./icons/favicon.ico"
-# FAVICON_PNG = "./icons/favicon.png"
-
-
 def set_entry_value(entry: tk.Entry, value: str):
     entry.configure(state=tk.NORMAL)
     end = entry.index(tk.END)
