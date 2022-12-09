@@ -5,8 +5,9 @@ from tkinter import filedialog
 from scripts.reporter import load_and_report
 from scripts import constants as c
 
-FAVICON_ICO = "icons/favicon.ico"
-FAVICON_PNG = "icons/favicon.png"
+
+# FAVICON_ICO = "./icons/favicon.ico"
+# FAVICON_PNG = "./icons/favicon.png"
 
 
 def set_entry_value(entry: tk.Entry, value: str):
@@ -58,9 +59,9 @@ class Window:
 
         # Main windows settings
         self.root.title("Etsy Reporter")
-        app_icon = tk.PhotoImage(file=FAVICON_PNG)
-        self.root.iconbitmap(FAVICON_ICO)
-        self.root.iconphoto(False, app_icon)
+        # self.root.iconbitmap(FAVICON_ICO)
+        # app_icon = tk.PhotoImage(file=FAVICON_PNG)
+        # self.root.iconphoto(False, app_icon)
 
         # Variables
         self.etsy_path = tk.StringVar()
