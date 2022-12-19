@@ -3,7 +3,7 @@ import tkinter as tk
 from tkinter import filedialog
 
 from scripts.reporter import load_and_report
-from scripts import constants as c
+import scripts.constants as c
 
 
 def set_entry_value(entry: tk.Entry, value: str):

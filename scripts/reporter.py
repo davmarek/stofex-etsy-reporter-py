@@ -1,11 +1,9 @@
 from tkinter import messagebox
-from time import perf_counter
-import threading
 
 from scripts.writer import write_data_to_cwd, write_data_to_report_folder
 from scripts.loader import load_etsy_data, load_money_data, load_ls_data
-from scripts.model import Product, ProductList
-from scripts import constants as c
+from scripts.model import ProductList
+import scripts.constants as c
 
 
 class LowStockReport:
@@ -18,7 +16,6 @@ class LowStockReport:
 
 
 def load_and_report(etsy_filepath: str, money_filepath: str, ols_filepath: str = ""):
-    time_start = perf_counter()
 
     # ==== FILE LOADING ====
     # load both mandatory files
@@ -49,13 +46,6 @@ def load_and_report(etsy_filepath: str, money_filepath: str, ols_filepath: str =
         restock_count = report_restock(ols_data, money_data)
         new_low_stock_count = report_new_low_stock(ols_data, ls_data)
 
-    # ==== REPORT TIME ====
-
-    time_end = perf_counter()
-
-    time_result = time_end - time_start
-    print("Time:", time_result)
-
     # ==== MESSAGE BOX ====
 
     message = \
@@ -81,7 +71,8 @@ def report_wrong_sku(etsy: ProductList, money: ProductList) -> int:
 
     if len(wrong) > 0:
         print("Wrong SKUs found")
-        write_data_to_report_folder(c.FILENAME_WRONG_SKU, wrong, c.HEADER_WRONG_SKU)
+        write_data_to_report_folder(
+            c.FILENAME_WRONG_SKU, wrong, c.HEADER_WRONG_SKU)
     else:
         print("No wrong SKUs found")
 
@@ -126,15 +117,19 @@ def report_low_stock(etsy: ProductList, money: ProductList) -> LowStockReport:
     if report.all > 0:
         # write low stock report to cwd AND reports folder
         write_data_to_cwd(c.FILENAME_LOW_STOCK, stock_all, c.HEADER_LOW_STOCK)
-        write_data_to_report_folder(c.FILENAME_LOW_STOCK, stock_all, c.HEADER_LOW_STOCK)
+        write_data_to_report_folder(
+            c.FILENAME_LOW_STOCK, stock_all, c.HEADER_LOW_STOCK)
 
         # write all other files ONLY to reports folder
         if report.sub0 > 0:
-            write_data_to_report_folder(c.FILENAME_LOW_STOCK_SUB0, stock_sub0, c.HEADER_LOW_STOCK)
+            write_data_to_report_folder(
+                c.FILENAME_LOW_STOCK_SUB0, stock_sub0, c.HEADER_LOW_STOCK)
         if report.sub10 > 0:
-            write_data_to_report_folder(c.FILENAME_LOW_STOCK_SUB10, stock_sub10, c.HEADER_LOW_STOCK)
+            write_data_to_report_folder(
+                c.FILENAME_LOW_STOCK_SUB10, stock_sub10, c.HEADER_LOW_STOCK)
         if report.sub50 > 0:
-            write_data_to_report_folder(c.FILENAME_LOW_STOCK_SUB50, stock_sub50, c.HEADER_LOW_STOCK)
+            write_data_to_report_folder(
+                c.FILENAME_LOW_STOCK_SUB50, stock_sub50, c.HEADER_LOW_STOCK)
 
     return report
 
@@ -151,7 +146,8 @@ def report_restock(ols: ProductList, money: ProductList) -> int:
 
     restock_count = len(restock)
     if restock_count > 0:
-        write_data_to_report_folder(c.FILENAME_RESTOCK, restock, c.HEADER_RESTOCK)
+        write_data_to_report_folder(
+            c.FILENAME_RESTOCK, restock, c.HEADER_RESTOCK)
 
     return restock_count
 
@@ -166,6 +162,7 @@ def report_new_low_stock(ols: ProductList, ls: ProductList) -> int:
 
     nls_count = len(nls)
     if nls_count > 0:
-        write_data_to_report_folder(c.FILENAME_LOW_STOCK_NEW, nls, c.HEADER_LOW_STOCK_NEW)
+        write_data_to_report_folder(
+            c.FILENAME_LOW_STOCK_NEW, nls, c.HEADER_LOW_STOCK_NEW)
 
     return nls_count

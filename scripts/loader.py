@@ -3,7 +3,7 @@ from csv import Sniffer
 
 import pandas as pd
 
-from scripts import constants as c
+import scripts.constants as c
 from scripts.model import ProductList, Product
 
 
